@@ -1,0 +1,19 @@
+1       program lotsoferrors(input);
+LEXERR:   Extra long id(max is 10):                lotsoferrors
+2       var x: integer;
+3       begin
+4       	read(x);
+5       	x := x + 2.50;
+LEXERR:   Trailing zeroes:                         2.50
+6       	x := x - 12345678901 + 055;
+LEXERR:   Extra long int(max is 10):               12345678901
+LEXERR:   Leading zeroes:                          055
+7       	x := x + 2.0E123;
+LEXERR:   Extra long exponent-part(max is 2):      2.0E123
+8       	x := x + 123456.3 - 4.123456;
+LEXERR:   Extra long integer-part(max is 5):       123456.3
+LEXERR:   Extra long fractional-part(max is 5):    4.123456
+9       	write(x)@
+LEXERR:   Unrecognized symbol:                     @
+10      end.
+11      
