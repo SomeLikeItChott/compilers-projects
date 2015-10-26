@@ -6,27 +6,22 @@ int main(int argc, char *argv[]){
 		fileName = argv[1];
 	else
 		fileName = "file";
-	if (argc > 2)
-		tokenName = argv[2];
-	else
-		tokenName = "tokens";
-	if (argc > 3)
-		listingName = argv[3];
-	else
-		listingName = "listing";
-	if (argc > 4)
-		reservedName = argv[4];
-	else
-		reservedName = "reserved";
+		
+	tokenName = "tokens";
+	listingName = "listing";
+	reservedName = "reserved";
 
 	readInReserved(reservedName);
 	openFiles(tokenName, listingName, fileName);
 
-	struct token toke;
+	parse();
 
+	/*
+	struct token toke;
 	do{
 		toke = getToken();
 	}while(toke.type != EOF_TYPE);
+	*/
 
 	closeFiles();
 }
