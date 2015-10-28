@@ -80,11 +80,18 @@ void closeFiles(){
 	fclose(listingFile);
 }
 
-int tokenEquals(struct token tok, int type, int attr){
-	if(tok.type == type && tok.attr == attr)
-		return 1;
-	else
-		return 0;
+int tokenEquals(struct token toke, int type, long attr){
+	if(attr == -1){
+		if(toke.type == type)
+			return 1;
+		else
+			return 0;
+	}else{
+		if(toke.type == type && toke.attr == attr)
+			return 1;
+		else
+			return 0;
+	}
 }
 
 char nextChar(){
@@ -161,6 +168,13 @@ struct token generateToken(int tokenType, int tokenAttr, char *attrName){
 		forw = &buffer[0] - sizeof(char);
 		back = &buffer[0] - sizeof(char);
 	} 
+
+
+	//parser doesn't want any whitespace tokens
+	if(a.type == WS_TYPE)
+		return getToken();
+
+	printf("token get: (%d %ld)\n", a.type, a.attr);
 
 	return a;
 }
@@ -257,22 +271,22 @@ void getTextFromType(char *text, int type){
 		case MULOP_TYPE: strcpy(text, "(MULOP)"); break;
 		case ASSIGNOP_TYPE: strcpy(text, "(ASGNOP)"); break;
 		case CATCHALL_TYPE: strcpy(text, "(CTCHAL)"); break;
-		case 10: strcpy(text, "(PROGRM)"); break;
-		case 11: strcpy(text, "(FUNCTN)"); break;
-		case 12: strcpy(text, "(PROC)"); break;
-		case 13: strcpy(text, "(ARRAY)"); break;
-		case 14: strcpy(text, "(OF)"); break;
-		case 15: strcpy(text, "(BEGIN)"); break;
-		case 16: strcpy(text, "(END)"); break;
-		case 17: strcpy(text, "(IF)"); break;
-		case 18: strcpy(text, "(THEN)"); break;
-		case 19: strcpy(text, "(ELSE)"); break;
-		case 20: strcpy(text, "(WHILE)"); break;
-		case 21: strcpy(text, "(DO)"); break;
-		case 22: strcpy(text, "(VAR)"); break;
-		case 23: strcpy(text, "(INTWRD)"); break;
-		case 24: strcpy(text, "(REALWD)"); break;
-		case 25: strcpy(text, "(NOT)"); break;
+		case PROG_TYPE: strcpy(text, "(PROGRM)"); break;
+		case FUNC_TYPE: strcpy(text, "(FUNCTN)"); break;
+		case PROC_TYPE: strcpy(text, "(PROC)"); break;
+		case ARRAY_TYPE: strcpy(text, "(ARRAY)"); break;
+		case OF_TYPE: strcpy(text, "(OF)"); break;
+		case BEGIN_TYPE: strcpy(text, "(BEGIN)"); break;
+		case END_TYPE: strcpy(text, "(END)"); break;
+		case IF_TYPE: strcpy(text, "(IF)"); break;
+		case THEN_TYPE: strcpy(text, "(THEN)"); break;
+		case ELSE_TYPE: strcpy(text, "(ELSE)"); break;
+		case WHILE_TYPE: strcpy(text, "(WHILE)"); break;
+		case DO_TYPE: strcpy(text, "(DO)"); break;
+		case VAR_TYPE: strcpy(text, "(VAR)"); break;
+		case INTWORD_TYPE: strcpy(text, "(INTWRD)"); break;
+		case REALWORD_TYPE: strcpy(text, "(REALWD)"); break;
+		case NOT_TYPE: strcpy(text, "(NOT)"); break;
 		case EOF_TYPE: strcpy(text, "(EOF)"); break;
 		case LEXERR_TYPE: strcpy(text, "(LEXERR)"); break;
 		default: strcpy(text, "(UNKNWN)"); break;

@@ -1,4 +1,5 @@
 #include "lexical_analyzer.h"
+#include "parser.h"
 
 int main(int argc, char *argv[]){
 	char *fileName, *tokenName, *listingName, *reservedName;
@@ -15,13 +16,6 @@ int main(int argc, char *argv[]){
 	openFiles(tokenName, listingName, fileName);
 
 	parse();
-
-	/*
-	struct token toke;
-	do{
-		toke = getToken();
-	}while(toke.type != EOF_TYPE);
-	*/
 
 	closeFiles();
 }

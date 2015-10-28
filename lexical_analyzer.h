@@ -8,7 +8,6 @@
 #include "lex_errors.h"
 #include "lex_machines.h"
 
-
 //defining token types
 #define WS_TYPE 		0
 #define ID_TYPE 		1
@@ -20,6 +19,24 @@
 #define MULOP_TYPE		7
 #define ASSIGNOP_TYPE 	8
 #define CATCHALL_TYPE	9
+//these ones are defined in reserved
+#define PROG_TYPE		10
+#define FUNC_TYPE		11
+#define PROC_TYPE		12
+#define ARRAY_TYPE		13
+#define OF_TYPE			14
+#define BEGIN_TYPE		15
+#define END_TYPE		16
+#define IF_TYPE			17
+#define THEN_TYPE		18
+#define ELSE_TYPE		19
+#define WHILE_TYPE		20
+#define DO_TYPE			21
+#define VAR_TYPE		22
+#define INTWORD_TYPE	23
+#define REALWORD_TYPE	24
+#define NOT_TYPE		25
+//end types defined in reserved
 #define EOF_TYPE		50
 #define LEXERR_TYPE		99
 
@@ -116,7 +133,7 @@ struct linkedNode {
 	struct linkedNode *next;
 };
 struct token getToken();
-int tokenEquals(struct token tok, int type, int attr);
+int tokenEquals(struct token tok, int type, long attr);
 char nextChar();
 struct token generateToken(int tokenType, int tokenAttr, char *attrName);
 void retract(int num);
