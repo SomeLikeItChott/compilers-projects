@@ -1,6 +1,9 @@
 #ifndef PARSER
 #define PARSER
 
+#include "lexical_analyzer.h"
+#include "helpers.h"
+
 extern struct token tok;
 
 struct token tempToken(int type, long attr);

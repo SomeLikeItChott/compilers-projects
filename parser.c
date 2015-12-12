@@ -1,4 +1,3 @@
-#include "lexical_analyzer.h"
 #include "parser.h"
 
 struct token tok;
@@ -31,10 +30,16 @@ void match(int expType, long expAttr){
 			tok = getToken();
 		else if(tokenEquals(tok, expType, expAttr) && tokenEquals(tok, EOF_TYPE, NO_ATTR))
 			printf("PARSE COMPLETE\n");
-		else if(!tokenEquals(tok, expType, expAttr))
-			printf("SYNTAX ERROR, need more hrer\n");
-		else
-			printf("I fell through match this is a problem\n");
+		else if(!tokenEquals(tok, expType, expAttr)){
+			char expText[12];
+			getPlaintext(expText, expType, expAttr);
+			char tokText[12];
+			getPlaintext(tokText, tok.type, tok.attr);
+			printf("SYNERR (match): Expecting %s, received %s\n", expText, tokText);
+			fprintf(listingFile, "SYNTAX ERROR (match): Expecting %s, received %s\n", expText, tokText);
+			tok = getToken();
+		}else
+		printf("fell through match(), aborting\n");
 	}
 }
 
@@ -48,8 +53,15 @@ void prgm(){
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 		prgmtail();
 	}
-	else
+	else{
 		printf("prgm error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting program, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
+	}
 }
 
 void prgmtail(){
@@ -65,6 +77,12 @@ void prgmtail(){
 		prgmtailtail();
 	} else{
 		printf("prgmtail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of var, function, begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -78,6 +96,12 @@ void prgmtailtail(){
 		match(CATCHALL_TYPE, PERIOD_ATTR);
 	} else{
 		printf("prgmtailtail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of function, begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -87,6 +111,13 @@ void idlist(){
 		idlisttail();
 	} else{
 		printf("idlist error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting identifier, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -99,6 +130,13 @@ void idlisttail(){
 		return;
 	} else{
 		printf("idlisttail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting , or ), received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -112,6 +150,14 @@ void decs(){
 		decstail();
 	} else{
 		printf("decs error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting var, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, FUNC_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -129,6 +175,14 @@ void decstail(){
 		return;
 	} else{
 		printf("decstail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of var, function, begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, FUNC_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -149,6 +203,14 @@ void type(){
 		stndtype();
 	} else{
 		printf("type error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of array, real (word), int (word), received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -159,6 +221,14 @@ void stndtype(){
 		match(INTWORD_TYPE, NO_ATTR);
 	} else{
 		printf("stndtype error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of real (word), int (word), received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -169,6 +239,13 @@ void subprgmdecs(){
 		subprgmdecstail();
 	} else{
 		printf("subprgmdecs error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting function, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -181,6 +258,13 @@ void subprgmdecstail(){
 		return;
 	} else{
 		printf("subprgmdecstail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of function, begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -190,6 +274,13 @@ void subprgmdec(){
 		subprgmdectail();
 	} else{
 		printf("subprgmdec error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting function, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -204,6 +295,13 @@ void subprgmdectail(){
 		subprgmdectailtail();
 	} else{
 		printf("subprgmdec error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of function, var, begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -215,6 +313,13 @@ void subprgmdectailtail(){
 		cmpdstmt();
 	} else{
 		printf("subprgmdec error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of function, begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -225,6 +330,15 @@ void subprgmhead(){
 		subprgmheadtail();
 	} else{
 		printf("subprgmhead error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting function, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, FUNC_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, BEGIN_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, VAR_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -240,6 +354,15 @@ void subprgmheadtail(){
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 	} else {
 		printf("subprgmheadtail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of (, :, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, FUNC_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, BEGIN_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, VAR_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -250,6 +373,13 @@ void args(){
 		match(CATCHALL_TYPE, CLOSEPAREN_ATTR);
 	}else{
 		printf("args error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting (, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, COLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -261,6 +391,13 @@ void paramlist(){
 		paramlisttail();
 	} else{
 		printf("paramlist error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting identifier, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -275,6 +412,13 @@ void paramlisttail(){
 		paramlisttail();
 	} else{
 		printf("paramlisttail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of ), ;, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -284,6 +428,16 @@ void cmpdstmt(){
 		cmpdstmttail();
 	} else{
 		printf("cmpdstmt error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting begin, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, PERIOD_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -298,6 +452,16 @@ void cmpdstmttail(){
 		match(END_TYPE, NO_ATTR);
 	} else{
 		printf("cmpdstmttail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of begin, identifier, if, while, end, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, PERIOD_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -309,8 +473,16 @@ void optnlstmts(){
 		stmtlist();
 	} else{
 		printf("optnlstmts error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of begin, identifier, if, while, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
+
 
 void stmtlist(){
 	if(tokenEquals(tok, BEGIN_TYPE, NO_ATTR) || 
@@ -321,6 +493,13 @@ void stmtlist(){
 		stmtlisttail();
 	} else{
 		printf("stmtlist error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of begin, identifier, if, while, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -333,6 +512,13 @@ void stmtlisttail(){
 		return;
 	} else{
 		printf("stmtlisttail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of ;, end, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -356,6 +542,15 @@ void stmt(){
 		stmt();
 	} else{
 		printf("stmt error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of identifier, begin, if, while, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -367,6 +562,15 @@ void stmttail(){
 		stmt();
 	} else{
 		printf("stmttail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of ;, end, else, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -376,6 +580,13 @@ void variable(){
 		variabletail();
 	} else{
 		printf("variable error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting identifier, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, ASSIGNOP_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -388,6 +599,13 @@ void variabletail(){
 		match(CATCHALL_TYPE, CLOSEBRACKET_ATTR);
 	} else{
 		printf("variabletail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of :=, [, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, ASSIGNOP_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -399,11 +617,19 @@ void exprlist(){
 		tokenEquals(tok, ID_TYPE, -1) ||
 		tokenEquals(tok, NOT_TYPE, NO_ATTR) ||
 		tokenEquals(tok, INT_TYPE, NO_ATTR) ||
-		tokenEquals(tok, REAL_TYPE, NO_ATTR)){
+		tokenEquals(tok, REAL_TYPE, NO_ATTR) ||
+		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		expr();
 		exprlisttail();
 	} else{
 		printf("exprlist error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of num, (, not, identifier, +, -, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -416,44 +642,123 @@ void exprlisttail(){
 		exprlisttail();
 	} else{
 		printf("exprlisttail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of comma, ), received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
 void expr(){
-	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || tokenEquals(tok, CATCHALL_TYPE, PLUS_ATTR) || tokenEquals(tok, CATCHALL_TYPE, MINUS_ATTR) || tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || tokenEquals(tok, ID_TYPE, -1) || tokenEquals(tok, NOT_TYPE, NO_ATTR) || tokenEquals(tok, INT_TYPE, NO_ATTR) || tokenEquals(tok, REAL_TYPE, NO_ATTR)){
+	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, PLUS_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, MINUS_ATTR) ||
+		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || 
+		tokenEquals(tok, ID_TYPE, -1) || 
+		tokenEquals(tok, NOT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, INT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, REAL_TYPE, NO_ATTR)|| 
+		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		smplexpr();
 		exprtail();
 	} else {
 		printf("expr error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of comma, num, (, not, identifier, +, -, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
 void exprtail(){
-	if(tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || tokenEquals(tok, DO_TYPE, NO_ATTR) || tokenEquals(tok, ELSE_TYPE, NO_ATTR) || tokenEquals(tok, END_TYPE, NO_ATTR) || tokenEquals(tok, THEN_TYPE, NO_ATTR)){
+	if(tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) ||
+		tokenEquals(tok, DO_TYPE, NO_ATTR) || 
+		tokenEquals(tok, ELSE_TYPE, NO_ATTR) || 
+		tokenEquals(tok, END_TYPE, NO_ATTR) || 
+		tokenEquals(tok, THEN_TYPE, NO_ATTR)){
 		return;
 	} else if (tokenEquals(tok, RELOP_TYPE, -1)){
 		match(RELOP_TYPE, -1);
 		smplexpr();
 	} else{
 		printf("exprtail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of ), ;, ], do, else, end, then, received %s\n", tokText);
+		while(!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
 void smplexpr(){
-	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || tokenEquals(tok, ID_TYPE, -1) || tokenEquals(tok, NOT_TYPE, NO_ATTR) || tokenEquals(tok, INT_TYPE, NO_ATTR) || tokenEquals(tok, REAL_TYPE, NO_ATTR)){
+	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || 
+		tokenEquals(tok, ID_TYPE, -1) || 
+		tokenEquals(tok, NOT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, INT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, REAL_TYPE, NO_ATTR) || 
+		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		term();
 		smplexprtail();
-	} else if (tokenEquals(tok, CATCHALL_TYPE, MINUS_ATTR) || tokenEquals(tok, CATCHALL_TYPE, PLUS_ATTR)){
+	} else if (tokenEquals(tok, CATCHALL_TYPE, MINUS_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, PLUS_ATTR)){
 		sign();
 		term();
 		smplexprtail();
 	} else{
 		printf("smplexpr error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of num, (, not, identifier, +, -, received %s\n", tokText);
+		while(!tokenEquals(tok, RELOP_TYPE, -1) &&
+			!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
 void smplexprtail(){
-	if(tokenEquals(tok, RELOP_TYPE, -1) || tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || tokenEquals(tok, DO_TYPE, NO_ATTR) || tokenEquals(tok, ELSE_TYPE, NO_ATTR) || tokenEquals(tok, END_TYPE, NO_ATTR) || tokenEquals(tok, THEN_TYPE, NO_ATTR)){
+	if(tokenEquals(tok, RELOP_TYPE, -1) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || 
+		tokenEquals(tok, DO_TYPE, NO_ATTR) || 
+		tokenEquals(tok, ELSE_TYPE, NO_ATTR) || 
+		tokenEquals(tok, END_TYPE, NO_ATTR) || 
+		tokenEquals(tok, THEN_TYPE, NO_ATTR)){
 		return;
 	} else if(tokenEquals(tok, ADDOP_TYPE, -1)){
 		match(ADDOP_TYPE, -1);
@@ -461,20 +766,65 @@ void smplexprtail(){
 		smplexprtail();
 	} else{
 		printf("smplexprtail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of relop, ), comma, ;, ], do, else, end, then, addop, received %s\n", tokText);
+		while(!tokenEquals(tok, RELOP_TYPE, -1) &&
+			!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
 void term(){
-	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || tokenEquals(tok, ID_TYPE, -1) || tokenEquals(tok, NOT_TYPE, NO_ATTR) || tokenEquals(tok, INT_TYPE, NO_ATTR) || tokenEquals(tok, REAL_TYPE, NO_ATTR)){
+	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || 
+		tokenEquals(tok, ID_TYPE, -1) || 
+		tokenEquals(tok, NOT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, INT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, REAL_TYPE, NO_ATTR) || 
+		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		factor();
 		termtail();
 	} else {
 		printf("term error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of (, identifier, not, num, received %s\n", tokText);
+		while(!tokenEquals(tok, ADDOP_TYPE, -1) &&
+			!tokenEquals(tok, RELOP_TYPE, -1) &&
+			!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
 void termtail(){
-	if(tokenEquals(tok, ADDOP_TYPE, -1) || tokenEquals(tok, RELOP_TYPE, -1) || tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || tokenEquals(tok, DO_TYPE, NO_ATTR) || tokenEquals(tok, ELSE_TYPE, NO_ATTR) || tokenEquals(tok, END_TYPE, NO_ATTR) || tokenEquals(tok, THEN_TYPE, NO_ATTR)){
+	if(tokenEquals(tok, ADDOP_TYPE, -1) || 
+		tokenEquals(tok, RELOP_TYPE, -1) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || 
+		tokenEquals(tok, DO_TYPE, NO_ATTR) || 
+		tokenEquals(tok, ELSE_TYPE, NO_ATTR) || 
+		tokenEquals(tok, END_TYPE, NO_ATTR) || 
+		tokenEquals(tok, THEN_TYPE, NO_ATTR)){
 		return;
 	} else if(tokenEquals(tok, MULOP_TYPE, -1)){
 		match(MULOP_TYPE, -1);
@@ -482,6 +832,22 @@ void termtail(){
 		termtail();
 	} else {
 		printf("termtail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of addop, relop, ), comma, ;, ], do, else, end, then, mulop, received %s\n", tokText);
+		while(!tokenEquals(tok, ADDOP_TYPE, -1) &&
+			!tokenEquals(tok, RELOP_TYPE, -1) &&
+			!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -500,8 +866,27 @@ void factor(){
 		match(INT_TYPE, NO_ATTR);
 	} else if(tokenEquals(tok, REAL_TYPE, NO_ATTR)){
 		match(REAL_TYPE, NO_ATTR);
+	} else if(tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
+		match(LONGREAL_TYPE, NO_ATTR);
 	} else{
 		printf("factor error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of (, identifier, not, num, received %s\n", tokText);
+		while(!tokenEquals(tok, MULOP_TYPE, -1) &&
+			!tokenEquals(tok, ADDOP_TYPE, -1) &&
+			!tokenEquals(tok, RELOP_TYPE, -1) &&
+			!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -514,10 +899,37 @@ void factortail(){
 		match(CATCHALL_TYPE, OPENBRACKET_ATTR);
 		expr();
 		match(CATCHALL_TYPE, CLOSEBRACKET_ATTR);
-	} else if(tokenEquals(tok, MULOP_TYPE, -1) || tokenEquals(tok, ADDOP_TYPE, -1) || tokenEquals(tok, RELOP_TYPE, -1) || tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || tokenEquals(tok, DO_TYPE, NO_ATTR) || tokenEquals(tok, ELSE_TYPE, NO_ATTR) || tokenEquals(tok, END_TYPE, NO_ATTR) || tokenEquals(tok, THEN_TYPE, NO_ATTR)){
+	} else if(tokenEquals(tok, MULOP_TYPE, -1) || 
+		tokenEquals(tok, ADDOP_TYPE, -1) || 
+		tokenEquals(tok, RELOP_TYPE, -1) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) || 
+		tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR) || 
+		tokenEquals(tok, DO_TYPE, NO_ATTR) || 
+		tokenEquals(tok, ELSE_TYPE, NO_ATTR) || 
+		tokenEquals(tok, END_TYPE, NO_ATTR) || 
+		tokenEquals(tok, THEN_TYPE, NO_ATTR)){
 		return;
 	} else{
 		printf("factortail error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of (, [, mulop, addop, relop, ), comma, ;, ], do, else, end, then, received %s\n", tokText);
+		while(!tokenEquals(tok, MULOP_TYPE, -1) &&
+			!tokenEquals(tok, ADDOP_TYPE, -1) &&
+			!tokenEquals(tok, RELOP_TYPE, -1) &&
+			!tokenEquals(tok, EOF_TYPE, NO_ATTR) && 
+			!tokenEquals(tok, END_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, THEN_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, DO_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, ELSE_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
+			tok = getToken();
+		}
 	}
 }
 
@@ -528,90 +940,16 @@ void sign(){
 		match(CATCHALL_TYPE, MINUS_ATTR);
 	} else{
 		printf("sign error\n");
+		char tokText[12];
+		getPlaintext(tokText, tok.type, tok.attr);
+		fprintf(listingFile, "SYNERR: Expecting one of +, -, received %s\n", tokText);
+		while(!tokenEquals(tok, ID_TYPE, -1) &&
+			!tokenEquals(tok, NOT_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) &&
+			!tokenEquals(tok, INT_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, REAL_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
+			tok = getToken();
+		}
 	}
 }
-
-/*
-//defining token types
-#define WS_TYPE 		0
-#define ID_TYPE 		1
-#define INT_TYPE 		2
-#define REAL_TYPE 		3
-#define LONGREAL_TYPE 	4
-#define RELOP_TYPE		5
-#define ADDOP_TYPE		6
-#define MULOP_TYPE		7
-#define ASSIGNOP_TYPE 	8
-#define CATCHALL_TYPE	9
-//these ones are defined in reserved
-#define PROG_TYPE		10
-#define FUNC_TYPE		11
-#define PROC_TYPE		12
-#define ARRAY_TYPE		13
-#define OF_TYPE			14
-#define BEGIN_TYPE		15
-#define END_TYPE		16
-#define IF_TYPE			17
-#define THEN_TYPE		18
-#define ELSE_TYPE		19
-#define WHILE_TYPE		20
-#define DO_TYPE			21
-#define VAR_TYPE		22
-#define INTWORD_TYPE	23
-#define REALWORD_TYPE	24
-#define NOT_TYPE		25
-//end types defined in reserved
-#define EOF_TYPE		50
-#define LEXERR_TYPE		99
-
-//ws attr
-#define SPACE_ATTR 		1
-#define NEWLINE_ATTR	2
-#define TAB_ATTR		3
-#define OTHER_WS_ATTR	4
-
-//relop attr
-#define EQUAL_ATTR		1
-#define GTEQUAL_ATTR	2
-#define GT_ATTR 		3
-#define LT_ATTR 		4
-#define LTEQUAL_ATTR	5
-#define NOTEQUAL_ATTR 	6
-
-//addop attr
-#define PLUS_ATTR		1
-#define MINUS_ATTR		2
-#define OR_ATTR			3
-
-//mulop attr
-#define TIMES_ATTR		1
-#define DIVIDE_ATTR		2
-#define DIV_ATTR 		3
-#define MOD_ATTR		4
-#define AND_ATTR		5
-
-//catchall attr
-#define COLON_ATTR		1
-#define SEMICOLON_ATTR 	2
-#define OPENBRACKET_ATTR 3
-#define CLOSEBRACKET_ATTR 4
-#define OPENPAREN_ATTR 	5
-#define CLOSEPAREN_ATTR 6
-#define OPENCURLYBRACE_ATTR 7
-#define CLOSECURLYBRACE_ATTR 8
-#define COMMA_ATTR 		9
-#define PERIOD_ATTR		10
-
-//lexerr attr
-#define EXTRA_LONG_INT_ATTR		1
-#define EXTRA_LONG_ID_ATTR		2
-#define LEADING_ZEROES_ATTR		3
-#define XX_TOO_LONG_ATTR		4
-#define YY_TOO_LONG_ATTR		5
-#define TRAILING_ZEROES_ATTR	6
-#define UNRECOGNIZED_SYMBOL_ATTR 7
-#define ZZ_TOO_LONG_ATTR		8
-
-//misc attr
-#define NO_ATTR		0
-*/

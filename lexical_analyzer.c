@@ -80,20 +80,6 @@ void closeFiles(){
 	fclose(listingFile);
 }
 
-int tokenEquals(struct token toke, int type, long attr){
-	if(attr == -1){
-		if(toke.type == type)
-			return 1;
-		else
-			return 0;
-	}else{
-		if(toke.type == type && toke.attr == attr)
-			return 1;
-		else
-			return 0;
-	}
-}
-
 char nextChar(){
 	forw += sizeof(char);
 	return *forw;
@@ -174,7 +160,9 @@ struct token generateToken(int tokenType, int tokenAttr, char *attrName){
 	if(a.type == WS_TYPE)
 		return getToken();
 
-	printf("token get: (%d %ld)\n", a.type, a.attr);
+	char tokText[12];
+	getPlaintext(tokText, a.type, a.attr);
+	printf("token get: (%d %ld) %s\n", a.type, a.attr, tokText);
 
 	return a;
 }
@@ -256,39 +244,5 @@ void printLexErr(int attr, char *lexeme){
 		case TRAILING_ZEROES_ATTR: fprintf(listingFile, "%-10s%-40s %s\n", "LEXERR:", "Trailing zeroes:", lexeme); break;
 		case UNRECOGNIZED_SYMBOL_ATTR: fprintf(listingFile, "%-10s%-40s %s\n", "LEXERR:", "Unrecognized symbol:", lexeme); break;
 		case ZZ_TOO_LONG_ATTR: fprintf(listingFile, "%-10s%-40s %s\n", "LEXERR:", "Extra long exponent-part(max is 2):", lexeme); break; 
-	}
-}
-
-void getTextFromType(char *text, int type){
-	switch (type){
-		case WS_TYPE: strcpy(text, "(WS)"); break;
-		case ID_TYPE: strcpy(text, "(ID)"); break;
-		case INT_TYPE: strcpy(text, "(INT)"); break;
-		case REAL_TYPE: strcpy(text, "(REAL)"); break;
-		case LONGREAL_TYPE: strcpy(text, "(LREAL)"); break;
-		case RELOP_TYPE: strcpy(text, "(RELOP)"); break;
-		case ADDOP_TYPE: strcpy(text, "(ADDOP)"); break;
-		case MULOP_TYPE: strcpy(text, "(MULOP)"); break;
-		case ASSIGNOP_TYPE: strcpy(text, "(ASGNOP)"); break;
-		case CATCHALL_TYPE: strcpy(text, "(CTCHAL)"); break;
-		case PROG_TYPE: strcpy(text, "(PROGRM)"); break;
-		case FUNC_TYPE: strcpy(text, "(FUNCTN)"); break;
-		case PROC_TYPE: strcpy(text, "(PROC)"); break;
-		case ARRAY_TYPE: strcpy(text, "(ARRAY)"); break;
-		case OF_TYPE: strcpy(text, "(OF)"); break;
-		case BEGIN_TYPE: strcpy(text, "(BEGIN)"); break;
-		case END_TYPE: strcpy(text, "(END)"); break;
-		case IF_TYPE: strcpy(text, "(IF)"); break;
-		case THEN_TYPE: strcpy(text, "(THEN)"); break;
-		case ELSE_TYPE: strcpy(text, "(ELSE)"); break;
-		case WHILE_TYPE: strcpy(text, "(WHILE)"); break;
-		case DO_TYPE: strcpy(text, "(DO)"); break;
-		case VAR_TYPE: strcpy(text, "(VAR)"); break;
-		case INTWORD_TYPE: strcpy(text, "(INTWRD)"); break;
-		case REALWORD_TYPE: strcpy(text, "(REALWD)"); break;
-		case NOT_TYPE: strcpy(text, "(NOT)"); break;
-		case EOF_TYPE: strcpy(text, "(EOF)"); break;
-		case LEXERR_TYPE: strcpy(text, "(LEXERR)"); break;
-		default: strcpy(text, "(UNKNWN)"); break;
 	}
 }
