@@ -2,11 +2,6 @@
 
 struct token tok;
 
-struct token tempToken(int type, long attr){
-	struct token temp = {type, attr};
-	return temp;
-}
-
 int tokensEq(struct token t1, struct token t2){
 	if(t1.type == t2.type && t1.attr == t2.attr)
 		return 1;
@@ -36,7 +31,7 @@ void match(int expType, long expAttr){
 			char tokText[12];
 			getPlaintext(tokText, tok.type, tok.attr);
 			printf("SYNERR (match): Expecting %s, received %s\n", expText, tokText);
-			fprintf(listingFile, "SYNTAX ERROR (match): Expecting %s, received %s\n", expText, tokText);
+			fprintf(listingFile, "SYNERR: Expecting %s, received %s\n", expText, tokText);
 			tok = getToken();
 		}else
 		printf("fell through match(), aborting\n");
@@ -847,6 +842,7 @@ void termtail(){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR) &&
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
 			tok = getToken();
+
 		}
 	}
 }
