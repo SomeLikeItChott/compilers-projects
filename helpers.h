@@ -10,6 +10,15 @@ extern struct linkedNode *symbolTable;
 extern struct symbolNode *eye;
 extern struct stackNode *greenStack;
 
+//token file
+extern FILE *tokenFile;
+//listing file
+extern FILE *listingFile;
+//source file
+extern FILE *srcFile;
+//source file, for printing to listing file
+extern FILE *srcLineFile;
+
 
 
 struct linkedNode {
@@ -40,6 +49,8 @@ struct symbolNode {
 	char* lexeme;
 	int varType;
 	int color;
+	int returnType;
+	int numParams;
 	struct symbolNode *firstChild;
 	struct symbolNode *parentOrPrevSibling;
 	struct symbolNode *nextSibling;
@@ -144,14 +155,20 @@ struct symbolNode {
 //PROG_TYPE			10
 #define FPAINT_TYPE	11
 #define FPAREAL_TYPE	12
+#define UNDECL_TYPE	13
+#define PGMPARM_TYPE	14
 //I may need to also define types for function parameters?
 //TODO
 
+int varTypesAreFPEquivalent(int type1, int type2);
 int checkAddGreenNode(char *lexeme, int varType);
+int addToGreenNode(char *lexeme, int returnType, int numParams);
 int checkAddBlueNode(char *lexeme, int varType);
 //void setVarType(int varType, long attr, struct linkedNode *table);
 //int getVarType(long attr, struct linkedNode *table);
 int getVarType(long attr);
+struct symbolNode* getFunctionNode(long attr);
+int getReturnType(long attr, int numParams);
 void addToGreenStack(struct symbolNode *symNode);
 void popGreenStack();
 int isNumVarType(int varType);

@@ -38,7 +38,6 @@ void match(int expType, long expAttr){
 	}
 }
 
-//todo add more checkaddgreennodes to funcs
 void prgm(){
 	if(tokenEquals(tok, PROG_TYPE, NO_ATTR)){
 		match(PROG_TYPE, NO_ATTR);
@@ -107,8 +106,11 @@ void prgmtailtail(){
 
 void idlist(){
 	if(tokenEquals(tok, ID_TYPE, -1)){
+		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
+		checkAddBlueNode(idNode->lexeme, PGMPARM_TYPE);
 		match(ID_TYPE, -1);
 		idlisttail();
+
 	} else{
 		printf("idlist error\n");
 		char tokText[12];
@@ -124,6 +126,8 @@ void idlist(){
 void idlisttail(){
 	if(tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR)){
 		match(CATCHALL_TYPE, COMMA_ATTR);
+		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
+		checkAddBlueNode(idNode->lexeme, PGMPARM_TYPE);
 		match(ID_TYPE, -1);
 		idlisttail();
 	} else if(tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
@@ -140,13 +144,9 @@ void idlisttail(){
 	}
 }
 
-//TODO add error checking for all of the checkaddnodes
 void decs(){
 	if(tokenEquals(tok, VAR_TYPE, NO_ATTR)){
-		printf("decs\n");
-		printf("eye is %s\n", eye->lexeme);
 		match(VAR_TYPE, NO_ATTR);
-		long varAddress = tok.attr;
 		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
@@ -346,8 +346,7 @@ void subprgmhead(){
 		struct linkedNode *prgmNode = (struct linkedNode*)tok.attr;
 		printf("the lex of the function is %s\n", prgmNode->lexeme);
 		match(ID_TYPE, -1);
-		checkAddGreenNode(prgmNode->lexeme, PROG_TYPE);
-		subprgmheadtail();
+		subprgmheadtail(prgmNode->lexeme);
 	} else{
 		printf("subprgmhead error\n");
 		char tokText[12];
@@ -363,12 +362,14 @@ void subprgmhead(){
 }
 
 
-//TODO figure out function types
-void subprgmheadtail(){
+void subprgmheadtail(char *lexeme){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR)){
-		args();
+		checkAddGreenNode(lexeme, FNAME_TYPE);
+		int numArgs = args();
 		match(CATCHALL_TYPE, COLON_ATTR);
-		stndtype();
+		int returnType = stndtype();
+		addToGreenNode(lexeme, returnType, numArgs);
+		//checkAddGreenNode(lexeme, FNAME_TYPE, returnType, numArgs);
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 	} else if(tokenEquals(tok, CATCHALL_TYPE, COLON_ATTR)){
 		match(CATCHALL_TYPE, COLON_ATTR);
@@ -388,11 +389,12 @@ void subprgmheadtail(){
 	}
 }
 
-void args(){
+int args(){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR)){
 		match(CATCHALL_TYPE, OPENPAREN_ATTR);
-		paramlist();
+		int numParams = paramlist();
 		match(CATCHALL_TYPE, CLOSEPAREN_ATTR);
+		return numParams;
 	}else{
 		printf("args error\n");
 		char tokText[12];
@@ -402,15 +404,29 @@ void args(){
 			!tokenEquals(tok, CATCHALL_TYPE, COLON_ATTR)){
 			tok = getToken();
 		}
+		return 0;
 	}
 }
 
-void paramlist(){
+int paramlist(){
 	if(tokenEquals(tok, ID_TYPE, -1)){
+		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
-		type();
-		paramlisttail();
+		int varType = type();
+		if(varType == INT_TYPE)
+			varType = FPINT_TYPE;
+		else if(varType == REAL_TYPE)
+			varType = FPREAL_TYPE;
+		else if(varType == AINT_TYPE)
+			varType = FPAINT_TYPE;
+		else if(varType == AREAL_TYPE)
+			varType = FPAREAL_TYPE;
+		else
+			varType = ERR_TYPE;
+		checkAddBlueNode(idNode->lexeme, varType);
+		int numParams = paramlisttail();
+		return numParams + 1;
 	} else{
 		printf("paramlist error\n");
 		char tokText[12];
@@ -420,18 +436,32 @@ void paramlist(){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
 			tok = getToken();
 		}
+		return 0;
 	}
 }
 
-void paramlisttail(){
+int paramlisttail(){
 	if(tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
-		return;
+		return 0;
 	} else if(tokenEquals(tok, CATCHALL_TYPE, SEMICOLON_ATTR)){
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
+		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
-		type();
-		paramlisttail();
+		int varType = type();
+		if(varType == INT_TYPE)
+			varType = FPINT_TYPE;
+		else if(varType == REAL_TYPE)
+			varType = FPREAL_TYPE;
+		else if(varType == AINT_TYPE)
+			varType = FPAINT_TYPE;
+		else if(varType == AREAL_TYPE)
+			varType = FPAREAL_TYPE;
+		else
+			varType = ERR_TYPE;
+		checkAddBlueNode(idNode->lexeme, varType);
+		int numParams = paramlisttail();
+		return numParams + 1;
 	} else{
 		printf("paramlisttail error\n");
 		char tokText[12];
@@ -441,6 +471,7 @@ void paramlisttail(){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
 			tok = getToken();
 		}
+		return 0;
 	}
 }
 
@@ -550,16 +581,22 @@ void stmt(){
 	if(tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
 		cmpdstmt();
 	} else if(tokenEquals(tok, ID_TYPE, -1)){
+		long attr = tok.attr;
 		int varType = variable();
 		match(ASSIGNOP_TYPE, NO_ATTR);
 		int exprType = expr();
-		if(varType == INT_TYPE && exprType == INT_TYPE){
-			printf("statement int\n");
-		} else if (varType == REAL_TYPE && exprType == REAL_TYPE){
-			printf("statement real\n");
+		if(varType == FNAME_TYPE){
+			varType = getReturnType(attr, -2);
+		}
+		if(varTypesAreFPEquivalent(varType, exprType)){
+			printf("assignop ok\n");
 		} else{
 			printf("BAD ASSIGNOP\n");
-			fprintf(listingFile, "SEMERR: Mismatched types on assignop statement, you have %d and %d\n", varType, exprType);
+			char varText[15];
+			getVarTypePlaintext(varText, varType);
+			char exprText[15];
+			getVarTypePlaintext(exprText, exprType);
+			fprintf(listingFile, "SEMERR: Mismatched types on assignop statement, you have %s and %s\n", varText, exprText);
 		}
 	} else if(tokenEquals(tok, IF_TYPE, NO_ATTR)){
 		match(IF_TYPE, NO_ATTR);
@@ -571,7 +608,9 @@ void stmt(){
 			printf("if statement has bool\n");
 		} else{
 			printf("BAD IF STATEMENT\n");
-			fprintf(listingFile, "SEMERR: Nonboolean on if statement, it is %d\n", exprType);
+			char exprText[15];
+			getVarTypePlaintext(exprText, exprType);
+			fprintf(listingFile, "SEMERR: Nonboolean on if statement, it is %s\n", exprText);
 		}
 	} else if(tokenEquals(tok, WHILE_TYPE, NO_ATTR)){
 		match(WHILE_TYPE, NO_ATTR);
@@ -582,7 +621,9 @@ void stmt(){
 			printf("while statement has bool\n");
 		} else{
 			printf("BAD IF STATEMENT");
-			fprintf(listingFile, "SEMERR: Nonboolean on while statement, it is %d\n", exprType);
+			char exprText[15];
+			getVarTypePlaintext(exprText, exprType);
+			fprintf(listingFile, "SEMERR: Nonboolean on while statement, it is %s\n", exprText);
 		}
 	} else{
 		printf("stmt error\n");
@@ -667,7 +708,7 @@ int variabletail(int inheritedType){
 	}
 }
 
-void exprlist(){
+int exprlist(struct symbolNode *childNode){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) ||
 		tokenEquals(tok, ADDOP_TYPE, PLUS_ATTR) ||
 		tokenEquals(tok, ADDOP_TYPE, MINUS_ATTR) ||
@@ -677,8 +718,19 @@ void exprlist(){
 		tokenEquals(tok, INT_TYPE, NO_ATTR) ||
 		tokenEquals(tok, REAL_TYPE, NO_ATTR) ||
 		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
-		expr();
-		exprlisttail();
+		int exprVarType = expr();
+		//TODO give more specific error message?
+		if(!(childNode->varType == FPINT_TYPE || 
+			childNode->varType == FPREAL_TYPE || 
+			childNode->varType == FPAINT_TYPE || 
+			childNode->varType == FPAREAL_TYPE)){
+			fprintf(listingFile, "SEMERR: Too many parameters in function call\n" );
+		}
+		else if(!varTypesAreFPEquivalent(childNode->varType, exprVarType)){
+			fprintf(listingFile, "SEMERR: Actual parameter type doesn't match formal parameter type\n" );
+		}
+		int numExprs = exprlisttail(childNode->nextSibling);
+		return numExprs + 1;
 	} else{
 		printf("exprlist error\n");
 		char tokText[12];
@@ -688,16 +740,29 @@ void exprlist(){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
 			tok = getToken();
 		}
+		return 0;
 	}
 }
 
-void exprlisttail(){
+int exprlisttail(struct symbolNode *childNode){
 	if(tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
-		return;
+		return 0;
 	} else if (tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR)) {
 		match(CATCHALL_TYPE, COMMA_ATTR);
-		expr();
-		exprlisttail();
+		int exprVarType = expr();
+		//TODO give more specific error message?
+		if(!(childNode->varType == FPINT_TYPE || 
+			childNode->varType == FPREAL_TYPE || 
+			childNode->varType == FPAINT_TYPE || 
+			childNode->varType == FPAREAL_TYPE)){
+			fprintf(listingFile, "SEMERR: Too many parameters in function call\n" );
+		}
+		else if(!varTypesAreFPEquivalent(childNode->varType, exprVarType)){
+			fprintf(listingFile, "SEMERR: Actual parameter type doesn't match formal parameter type\n" );
+		}
+		int numExprs = exprlisttail(childNode->nextSibling);
+		//TODO this might result in a segfault, if there's no more nextSibling?
+		return numExprs + 1;
 	} else{
 		printf("exprlisttail error\n");
 		char tokText[12];
@@ -707,6 +772,7 @@ void exprlisttail(){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEPAREN_ATTR)){
 			tok = getToken();
 		}
+		return 0;
 	}
 }
 
@@ -916,7 +982,8 @@ int termtail(int inheritedType){
 		int factorType = factor();
 		int termtailType;
 		if(mulopAttr == TIMES_ATTR || mulopAttr == MOD_ATTR){
-			if(inheritedType == INT_TYPE && factorType == INT_TYPE)
+			//if(inheritedType == INT_TYPE && factorType == INT_TYPE)
+			if(varTypesAreFPEquivalent(inheritedType, factorType) == INT_TYPE)
 				termtailType = INT_TYPE;
 			else
 				termtailType = ERR_TYPE;
@@ -969,15 +1036,14 @@ int factor(){
 		return exprType;
 	} else if(tokenEquals(tok, ID_TYPE, -1)){
 		int fin = getVarType(tok.attr);
+		long attr = tok.attr;
 		match(ID_TYPE, -1);
-		return factortail(fin);
+		return factortail(fin, attr);
 	} else if(tokenEquals(tok, NOT_TYPE, NO_ATTR)){
 		match(NOT_TYPE, NO_ATTR);
 		int ftype = factor();
 		if(ftype == BOOL_TYPE)
 			return BOOL_TYPE;
-		else if(ftype == INT_TYPE || ftype == REAL_TYPE)
-			return ERRSTAR_TYPE;
 		else
 			return ERR_TYPE;
 	} else if(tokenEquals(tok, INT_TYPE, NO_ATTR)){
@@ -1005,22 +1071,38 @@ int factor(){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
 			tok = getToken();
 		}
-		return ERRSTAR_TYPE;
+		return ERR_TYPE;
 	}
 }
 
-int factortail(int inheritedType){
+int factortail(int inheritedType, long attr){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR)){
 		match(CATCHALL_TYPE, OPENPAREN_ATTR);
-		exprlist();
+		struct symbolNode *funcNode = getFunctionNode(attr);
+		struct symbolNode *childNode;
+		if(funcNode->varType != UNDECL_TYPE) {
+			if(funcNode->firstChild != NULL){
+				childNode = funcNode->firstChild;
+				printf("the first child is %s\n", childNode->lexeme);
+			}else{
+				printf("TODO also here\n");
+			}
+		} else {
+			//there is no function called that! might as well abort, i guess
+			struct linkedNode *prgmNode = (struct linkedNode*)attr;
+			char *lexeme = prgmNode->lexeme;
+			//fprintf(listingFile, "SEMERR: Function %s is not declared in this scope\n", lexeme);
+			return ERR_TYPE;
+		}
+		int numParams = exprlist(childNode);
 		match(CATCHALL_TYPE, CLOSEPAREN_ATTR);
-		return ERR_TYPE;
-		//TODO!!!
+		return getReturnType(attr, numParams);
 	} else if(tokenEquals(tok, CATCHALL_TYPE, OPENBRACKET_ATTR)){
 		match(CATCHALL_TYPE, OPENBRACKET_ATTR);
 		int exprType = expr();
 		match(CATCHALL_TYPE, CLOSEBRACKET_ATTR);
 		// is this right? it has aint but no areal
+		//TODO
 		if(exprType == INT_TYPE)
 			return AINT_TYPE;
 		else if(exprType == INT_TYPE){
@@ -1029,11 +1111,11 @@ int factortail(int inheritedType){
 			else if(inheritedType == REAL_TYPE)
 				return REAL_TYPE;
 			else
-				return ERRSTAR_TYPE;
+				return ERR_TYPE;
 		} else if (exprType == ERR_TYPE || inheritedType == ERR_TYPE)
 			return ERR_TYPE;
 		else
-			return ERRSTAR_TYPE;
+			return ERR_TYPE;
 	} else if(tokenEquals(tok, MULOP_TYPE, -1) || 
 		tokenEquals(tok, ADDOP_TYPE, -1) || 
 		tokenEquals(tok, RELOP_TYPE, -1) || 
@@ -1065,7 +1147,7 @@ int factortail(int inheritedType){
 			!tokenEquals(tok, CATCHALL_TYPE, CLOSEBRACKET_ATTR)){
 			tok = getToken();
 		}
-		return ERRSTAR_TYPE;
+		return ERR_TYPE;
 	}
 }
 

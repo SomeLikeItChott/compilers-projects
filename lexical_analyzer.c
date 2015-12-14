@@ -1,10 +1,6 @@
 #include "lexical_analyzer.h"
 
 struct linkedNode *reservedTable;
-FILE *tokenFile;
-FILE *listingFile;
-FILE *srcFile;
-FILE *srcLineFile;
 char buffer[BUFFER_SIZE];
 char *forw;
 char *back;

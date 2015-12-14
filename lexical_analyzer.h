@@ -15,15 +15,6 @@
 //pointer to reserved word table
 extern struct linkedNode *reservedTable;
 
-//token file
-extern FILE *tokenFile;
-//listing file
-extern FILE *listingFile;
-//source file
-extern FILE *srcFile;
-//source file, for printing to listing file
-extern FILE *srcLineFile;
-
 //buffer that holds chars that make the tokens
 extern char buffer[];
 //forward pointer
