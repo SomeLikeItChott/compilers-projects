@@ -38,6 +38,7 @@ void match(int expType, long expAttr){
 	}
 }
 
+//todo add more checkaddgreennodes to funcs
 void prgm(){
 	if(tokenEquals(tok, PROG_TYPE, NO_ATTR)){
 		match(PROG_TYPE, NO_ATTR);
@@ -45,6 +46,7 @@ void prgm(){
 		match(ID_TYPE, -1);
 		printf("the lex of the program is %s\n", prgmNode->lexeme);
 		checkAddGreenNode(prgmNode->lexeme, PROG_TYPE);
+		printf("eye is now %s\n", eye->lexeme);
 		match(CATCHALL_TYPE, OPENPAREN_ATTR);
 		idlist();
 		match(CATCHALL_TYPE, CLOSEPAREN_ATTR);
@@ -141,6 +143,8 @@ void idlisttail(){
 //TODO add error checking for all of the checkaddnodes
 void decs(){
 	if(tokenEquals(tok, VAR_TYPE, NO_ATTR)){
+		printf("decs\n");
+		printf("eye is %s\n", eye->lexeme);
 		match(VAR_TYPE, NO_ATTR);
 		long varAddress = tok.attr;
 		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
@@ -148,8 +152,8 @@ void decs(){
 		match(CATCHALL_TYPE, COLON_ATTR);
 		int varType = type();
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
-		decstail();
 		checkAddBlueNode(idNode->lexeme, varType);
+		decstail();
 	} else{
 		printf("decs error\n");
 		char tokText[12];
@@ -171,8 +175,8 @@ void decstail(){
 		match(CATCHALL_TYPE, COLON_ATTR);
 		int varType = type();
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
-		decstail();
 		checkAddBlueNode(idNode->lexeme, varType);
+		decstail();
 	} else if (tokenEquals(tok, FUNC_TYPE, NO_ATTR)){
 		return;
 	} else if (tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
@@ -339,7 +343,10 @@ void subprgmdectailtail(){
 void subprgmhead(){
 	if(tokenEquals(tok, FUNC_TYPE, NO_ATTR)){
 		match(FUNC_TYPE, NO_ATTR);
+		struct linkedNode *prgmNode = (struct linkedNode*)tok.attr;
+		printf("the lex of the function is %s\n", prgmNode->lexeme);
 		match(ID_TYPE, -1);
+		checkAddGreenNode(prgmNode->lexeme, PROG_TYPE);
 		subprgmheadtail();
 	} else{
 		printf("subprgmhead error\n");
@@ -613,7 +620,7 @@ void stmttail(){
 
 int variable(){
 	if(tokenEquals(tok, ID_TYPE, -1)){
-		int varType = getVarType(tok.attr, symbolTable);
+		int varType = getVarType(tok.attr);
 		match(ID_TYPE, -1);
 		return variabletail(varType);
 	} else{
@@ -961,7 +968,7 @@ int factor(){
 		match(CATCHALL_TYPE, CLOSEPAREN_ATTR);
 		return exprType;
 	} else if(tokenEquals(tok, ID_TYPE, -1)){
-		int fin = getVarType(tok.attr, symbolTable);
+		int fin = getVarType(tok.attr);
 		match(ID_TYPE, -1);
 		return factortail(fin);
 	} else if(tokenEquals(tok, NOT_TYPE, NO_ATTR)){

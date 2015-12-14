@@ -3,6 +3,7 @@
 
 #include "string.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 //pointer to symbol table
 extern struct linkedNode *symbolTable;

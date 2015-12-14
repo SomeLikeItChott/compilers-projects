@@ -4,9 +4,19 @@ struct linkedNode *symbolTable;
 struct symbolNode *eye;
 struct stackNode *greenStack;
 
+/*
+void addToTable(char *lexeme, int type, int attr, struct linkedNode **table){
+	struct linkedNode *temp = (struct linkedNode*)malloc(sizeof(struct linkedNode));
+	temp->lexeme = malloc(sizeof(lexeme));
+	strcpy(temp->lexeme, lexeme);
+	temp->type = type;
+	temp->attr = attr;
+	temp->next = *table;
+	*table = temp;
+}
+*/
 
 int checkAddGreenNode(char *lexeme, int varType){
-	//TODO can't deal with empty eye (I think???)
 	printf("adding green node called %s with type %d\n", lexeme, varType);
 	struct symbolNode *temp = eye;
 	while(temp != NULL){
@@ -17,18 +27,27 @@ int checkAddGreenNode(char *lexeme, int varType){
 		temp = temp->parentOrPrevSibling;
 	}
 	//there are no nodes above eye with the same name as new green node
-	//TODO add vartype
-	struct symbolNode a = {.lexeme = lexeme, .parentOrPrevSibling = eye, .color = GREEN_COLOR, .varType = varType};
+	//struct symbolNode a = {.lexeme = lexeme, .parentOrPrevSibling = eye, .color = GREEN_COLOR, .varType = varType};
+	struct symbolNode *newNode = (struct symbolNode*)malloc(sizeof(struct symbolNode));
+	newNode->lexeme = malloc(sizeof(lexeme));
+	strcpy(newNode->lexeme, lexeme);
+	newNode->varType = varType;
+	newNode->parentOrPrevSibling = eye;
+	newNode->color = GREEN_COLOR;
+
+	printf("now adding node with lexeme %s\n", newNode->lexeme);
+
 	if(eye != NULL)
-		eye->nextSibling = &a;
-	eye = &a;
-	addToGreenStack(&a);
-	//TODO probably doesn't work
+		eye->nextSibling = newNode;
+	eye = newNode;
+	addToGreenStack(newNode);
+	printf("eye is now %s\n", eye->lexeme);
 	return varType;
 }
 
 int checkAddBlueNode(char *lexeme, int varType){
 	printf("adding blue node called %s with type %d\n", lexeme, varType);
+	printf("the current eye is %s\n", eye->lexeme);
 	struct symbolNode *temp = eye;
 	while(temp != NULL){
 		if(strcmp(lexeme, temp->lexeme) == 0){
@@ -41,13 +60,19 @@ int checkAddBlueNode(char *lexeme, int varType){
 	}
 	//there are no nodes between eye and next green node upwards
 	//with the same name as new blue node
-	struct symbolNode a = {.lexeme = lexeme, .parentOrPrevSibling = eye, .color = BLUE_COLOR, .varType = varType};
+	//struct symbolNode a = {.lexeme = lexeme, .parentOrPrevSibling = eye, .color = BLUE_COLOR, .varType = varType};
+	struct symbolNode *newNode = (struct symbolNode*)malloc(sizeof(struct symbolNode));
+	newNode->lexeme = malloc(sizeof(lexeme));
+	strcpy(newNode->lexeme, lexeme);
+	newNode->varType = varType;
+	newNode->parentOrPrevSibling = eye;
+	newNode->color = BLUE_COLOR;
+
 	if(eye->color == BLUE_COLOR)
-		eye->nextSibling = &a;
+		eye->nextSibling = newNode;
 	else
-		eye->firstChild = &a;
-	eye = &a;
-	//TODO probably doesn't work
+		eye->firstChild = newNode;
+	eye = newNode;
 	return varType;
 }
 
@@ -59,10 +84,12 @@ int getVarType(long attr){
 	while(temp != NULL){
 		if(strcmp(lexeme, temp->lexeme) == 0){
 			//you have found a thing with the same lexeme
+			printf("the type is %d\n", temp->varType);
 			return temp->varType;
 		}
 		temp = temp->parentOrPrevSibling;
 	}
+	printf("the type is %d\n", temp->varType);
 	return ERR_TYPE;
 }
 
@@ -81,10 +108,10 @@ void addToGreenStack(struct symbolNode *symNode){
 void popGreenStack(){
 	eye = (greenStack->greenNode)->parentOrPrevSibling;
 	greenStack = greenStack->next;
+	printf("eye is now %s\n", eye->lexeme);
 }
 
 /*
-//TODO doesn't work with scope
 //is actually unnecessary i think?
 void setVarType(int varType, long attr, struct linkedNode *table){
 	struct linkedNode *temp = table;
@@ -97,7 +124,6 @@ void setVarType(int varType, long attr, struct linkedNode *table){
 	}
 }
 
-//TODO doesn't work with scope
 int getVarType(long attr, struct linkedNode *table){
 	struct linkedNode *temp = table;
 	while(temp != NULL){
