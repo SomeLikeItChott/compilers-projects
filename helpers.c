@@ -1,7 +1,91 @@
 #include "helpers.h"
 
 struct linkedNode *symbolTable;
+struct symbolNode *eye;
+struct stackNode *greenStack;
 
+
+int checkAddGreenNode(char *lexeme, int varType){
+	//TODO can't deal with empty eye (I think???)
+	printf("adding green node called %s with type %d\n", lexeme, varType);
+	struct symbolNode *temp = eye;
+	while(temp != NULL){
+		if(strcmp(lexeme, temp->lexeme) == 0){
+			//you have found a thing with the same lexeme
+			return ERR_TYPE;
+		}
+		temp = temp->parentOrPrevSibling;
+	}
+	//there are no nodes above eye with the same name as new green node
+	//TODO add vartype
+	struct symbolNode a = {.lexeme = lexeme, .parentOrPrevSibling = eye, .color = GREEN_COLOR, .varType = varType};
+	if(eye != NULL)
+		eye->nextSibling = &a;
+	eye = &a;
+	addToGreenStack(&a);
+	//TODO probably doesn't work
+	return varType;
+}
+
+int checkAddBlueNode(char *lexeme, int varType){
+	printf("adding blue node called %s with type %d\n", lexeme, varType);
+	struct symbolNode *temp = eye;
+	while(temp != NULL){
+		if(strcmp(lexeme, temp->lexeme) == 0){
+			//you have found a thing with the same lexeme
+			return ERR_TYPE;
+		}
+		if(temp->color == GREEN_COLOR)
+			break;
+		temp = temp->parentOrPrevSibling;
+	}
+	//there are no nodes between eye and next green node upwards
+	//with the same name as new blue node
+	struct symbolNode a = {.lexeme = lexeme, .parentOrPrevSibling = eye, .color = BLUE_COLOR, .varType = varType};
+	if(eye->color == BLUE_COLOR)
+		eye->nextSibling = &a;
+	else
+		eye->firstChild = &a;
+	eye = &a;
+	//TODO probably doesn't work
+	return varType;
+}
+
+int getVarType(long attr){
+	struct symbolNode *temp = eye;
+	struct linkedNode *prgmNode = (struct linkedNode*)attr;
+	char *lexeme = prgmNode->lexeme;
+	printf("looking for the type of %s\n", lexeme);
+	while(temp != NULL){
+		if(strcmp(lexeme, temp->lexeme) == 0){
+			//you have found a thing with the same lexeme
+			return temp->varType;
+		}
+		temp = temp->parentOrPrevSibling;
+	}
+	return ERR_TYPE;
+}
+
+
+void addToGreenStack(struct symbolNode *symNode){
+	struct stackNode nNode = {.greenNode = symNode};
+	struct stackNode *newNode = &nNode;
+	if(greenStack == NULL)
+		greenStack = newNode;
+	else{
+		newNode->next = greenStack;
+		greenStack = newNode;
+	}
+}
+
+void popGreenStack(){
+	eye = (greenStack->greenNode)->parentOrPrevSibling;
+	greenStack = greenStack->next;
+}
+
+/*
+//TODO doesn't work with scope
+//is actually unnecessary i think?
 void setVarType(int varType, long attr, struct linkedNode *table){
 	struct linkedNode *temp = table;
 	while(temp != NULL){
@@ -13,6 +97,7 @@ void setVarType(int varType, long attr, struct linkedNode *table){
 	}
 }
 
+//TODO doesn't work with scope
 int getVarType(long attr, struct linkedNode *table){
 	struct linkedNode *temp = table;
 	while(temp != NULL){
@@ -23,23 +108,14 @@ int getVarType(long attr, struct linkedNode *table){
 	}
 	return -1;
 }
-
-/*
-struct token isInTable(char *string, struct linkedNode *table){
-	struct linkedNode *temp = table;
-	while(temp != NULL){
-		if(strcmp(string, temp->lexeme) == 0){
-			struct token tableItem;
-			tableItem.type = temp->type;
-			tableItem.attr = temp->attr;
-			return tableItem;
-		}
-		temp = temp->next;
-	}
-	struct token a = {.type = -1, .attr = -1};
-	return a;
-}
 */
+
+int isNumVarType(int varType){
+	if(varType == INT_TYPE || varType == REAL_TYPE)
+		return 1;
+	else
+		return 0;
+}
 
 void getTextFromType(char *text, int type){
 	switch (type){
@@ -124,6 +200,42 @@ void getCatchallPlaintext(char *text, long attr){
 		default: strcpy(text, "(UNKNWN)"); break;
 	}
 }
+
+void getVarTypePlaintext(char *text, int varType){
+	switch (varType){
+		case ERR_TYPE: strcpy(text, "ERR"); break;
+		case ERRSTAR_TYPE: strcpy(text, "ERR*"); break;
+		case INT_TYPE: strcpy(text, "integer"); break;
+		case REAL_TYPE: strcpy(text, "real"); break;
+		case BOOL_TYPE: strcpy(text, "boolean"); break;
+		case FNAME_TYPE: strcpy(text, "func name"); break;
+		case AINT_TYPE: strcpy(text, "int array"); break;
+		case AREAL_TYPE: strcpy(text, "real array"); break;
+		case FPINT_TYPE: strcpy(text, "FP int"); break;
+		case FPREAL_TYPE: strcpy(text, "FP real"); break;
+		case PROG_TYPE: strcpy(text, "prgm name"); break;
+		case FPAINT_TYPE: strcpy(text, "FP int array"); break;
+		case FPAREAL_TYPE: strcpy(text, "FP real array"); break;
+		default: strcpy(text, "unknown"); break;
+	}
+}
+
+/*
+#define ERR_TYPE	0
+#define ERRSTAR_TYPE	1
+//these types are literal types, and luckily their numbering works out!
+//INT_TYPE 			2
+//REAL_TYPE 		3
+#define BOOL_TYPE	4
+#define FNAME_TYPE	5
+#define AINT_TYPE	6
+#define AREAL_TYPE	7
+#define FPINT_TYPE	8
+#define FPREAL_TYPE	9
+//PROG_TYPE			10
+#define FPAINT_TYPE	11
+#define FPAREAL_TYPE	12
+*/
 
 int tokenEquals(struct token toke, int type, long attr){
 	if(attr == -1){

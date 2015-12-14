@@ -2,9 +2,14 @@
 #define HELPERS
 
 #include "string.h"
+#include "stdio.h"
 
 //pointer to symbol table
 extern struct linkedNode *symbolTable;
+extern struct symbolNode *eye;
+extern struct stackNode *greenStack;
+
+
 
 struct linkedNode {
 	char* lexeme;
@@ -20,6 +25,25 @@ struct token {
 	int type;
 	long attr;
 };
+
+struct stackNode {
+	struct symbolNode *greenNode;
+	struct stackNode *next;
+};
+
+//the following defines and structs are for the symbol table
+#define BLUE_COLOR 	1
+#define GREEN_COLOR	2
+
+struct symbolNode {
+	char* lexeme;
+	int varType;
+	int color;
+	struct symbolNode *firstChild;
+	struct symbolNode *parentOrPrevSibling;
+	struct symbolNode *nextSibling;
+};
+
 
 //defining token types
 #define WS_TYPE 		0
@@ -106,7 +130,7 @@ struct token {
 
 //defining types for type-checking
 #define ERR_TYPE	0
-#define ERR_STAR_TYPE	1
+#define ERRSTAR_TYPE	1
 //these types are literal types, and luckily their numbering works out!
 //INT_TYPE 			2
 //REAL_TYPE 		3
@@ -114,14 +138,26 @@ struct token {
 #define FNAME_TYPE	5
 #define AINT_TYPE	6
 #define AREAL_TYPE	7
+#define FPINT_TYPE	8
+#define FPREAL_TYPE	9
+//PROG_TYPE			10
+#define FPAINT_TYPE	11
+#define FPAREAL_TYPE	12
 //I may need to also define types for function parameters?
 //TODO
 
-void setVarType(int varType, long attr, struct linkedNode *table);
-int getVarType(long attr, struct linkedNode *table);
+int checkAddGreenNode(char *lexeme, int varType);
+int checkAddBlueNode(char *lexeme, int varType);
+//void setVarType(int varType, long attr, struct linkedNode *table);
+//int getVarType(long attr, struct linkedNode *table);
+int getVarType(long attr);
+void addToGreenStack(struct symbolNode *symNode);
+void popGreenStack();
+int isNumVarType(int varType);
 void getTextFromType(char *text, int type);
 void getPlaintext(char *text, int type, long attr);
 void getCatchallPlaintext(char *text, long attr);
+void getVarTypePlaintext(char *text, int varType);
 int tokenEquals(struct token tok, int type, long attr);
 
 
