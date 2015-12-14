@@ -33,7 +33,7 @@ void retract(int num);
 void readInReserved();
 struct token isInTable(char *string, struct linkedNode *table);
 void addToTable(char *lexeme, int type, int attr, struct linkedNode **table);
-void openFiles(char *tokenName, char *listingName, char *fileName);
+void openFiles(char *tokenName, char *listingName, char *fileName, char *addressesName);
 void closeFiles();
 void getTextFromType(char *text, int type);
 void printLexErr(int attr, char *lexeme);

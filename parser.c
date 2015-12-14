@@ -1,6 +1,7 @@
 #include "parser.h"
 
 struct token tok;
+int memoryUsed = 0;
 
 int tokensEq(struct token t1, struct token t2){
 	if(t1.type == t2.type && t1.attr == t2.attr)
@@ -45,6 +46,7 @@ void prgm(){
 		match(ID_TYPE, -1);
 		printf("the lex of the program is %s\n", prgmNode->lexeme);
 		checkAddGreenNode(prgmNode->lexeme, PROG_TYPE);
+		memoryUsed = 0;
 		printf("eye is now %s\n", eye->lexeme);
 		match(CATCHALL_TYPE, OPENPAREN_ATTR);
 		idlist();
@@ -66,10 +68,12 @@ void prgm(){
 void prgmtail(){
 	if(tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
 		cmpdstmt();
+		popGreenStack();
 		match(CATCHALL_TYPE, PERIOD_ATTR);
 	} else if (tokenEquals(tok, FUNC_TYPE, NO_ATTR)){
 		subprgmdecs();
 		cmpdstmt();
+		popGreenStack();
 		match(CATCHALL_TYPE, PERIOD_ATTR);
 	} else if(tokenEquals(tok, VAR_TYPE, NO_ATTR)){
 		decs();
@@ -88,10 +92,12 @@ void prgmtail(){
 void prgmtailtail(){
 	if(tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
 		cmpdstmt();
+		popGreenStack();
 		match(CATCHALL_TYPE, PERIOD_ATTR);
 	} else if (tokenEquals(tok, FUNC_TYPE, NO_ATTR)){
 		subprgmdecs();
 		cmpdstmt();
+		popGreenStack();
 		match(CATCHALL_TYPE, PERIOD_ATTR);
 	} else{
 		printf("prgmtailtail error\n");
@@ -150,7 +156,7 @@ void decs(){
 		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
-		int varType = type();
+		int varType = type(idNode->lexeme);
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 		checkAddBlueNode(idNode->lexeme, varType);
 		decstail();
@@ -173,7 +179,7 @@ void decstail(){
 		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
-		int varType = type();
+		int varType = type(idNode->lexeme);
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 		checkAddBlueNode(idNode->lexeme, varType);
 		decstail();
@@ -194,26 +200,46 @@ void decstail(){
 	}
 }
 
-int type(){
+int type(char *lexeme){
 	if(tokenEquals(tok, ARRAY_TYPE, NO_ATTR)){
 		match(ARRAY_TYPE, NO_ATTR);
 		match(CATCHALL_TYPE, OPENBRACKET_ATTR);
-		match(INT_TYPE, NO_ATTR);
+		int arrStart = (int)tok.attr;
+		match(INT_TYPE, -1);
 		match(CATCHALL_TYPE, PERIOD_ATTR);
 		match(CATCHALL_TYPE, PERIOD_ATTR);
-		match(INT_TYPE, NO_ATTR);
+		int arrEnd = (int)tok.attr;
+		match(INT_TYPE, -1);
 		match(CATCHALL_TYPE, CLOSEBRACKET_ATTR);
 		match(OF_TYPE, NO_ATTR);
 		int ofType = stndtype();
 		if(ofType == INT_TYPE){
+			if(strcmp("", lexeme)){
+				fprintf(addressesFile, "%-12s %-10d\n", lexeme, memoryUsed);
+				memoryUsed += (arrEnd - arrStart + 1)*4;
+			}
 			return AINT_TYPE;
 		} else if(ofType == REAL_TYPE){
+			if(strcmp("", lexeme)){
+				fprintf(addressesFile, "%-12s %-10d\n", lexeme, memoryUsed);
+				memoryUsed += (arrEnd - arrStart + 1)*8;
+			}
 			return AREAL_TYPE;
 		} else{
 			return ERR_TYPE;
 		}
 	} else if(tokenEquals(tok, REALWORD_TYPE, NO_ATTR) || tokenEquals(tok, INTWORD_TYPE, NO_ATTR)){
-		return stndtype();
+		int varType = stndtype();
+		if(strcmp("", lexeme)){
+			if(varType == INT_TYPE){
+				fprintf(addressesFile, "%-12s %-10d\n", lexeme, memoryUsed);
+				memoryUsed += 4;
+			} else if (varType == REAL_TYPE){
+				fprintf(addressesFile, "%-12s %-10d\n", lexeme, memoryUsed);
+				memoryUsed += 8;
+			}
+		}
+		return varType;
 	} else{
 		printf("type error\n");
 		char tokText[12];
@@ -305,8 +331,10 @@ void subprgmdectail(){
 	if(tokenEquals(tok, FUNC_TYPE, NO_ATTR)){
 		subprgmdecs();
 		cmpdstmt();
+		popGreenStack();
 	} else if(tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
 		cmpdstmt();
+		popGreenStack();
 	} else if(tokenEquals(tok, VAR_TYPE, NO_ATTR)){
 		decs();
 		subprgmdectailtail();
@@ -326,8 +354,10 @@ void subprgmdectailtail(){
 	if(tokenEquals(tok, FUNC_TYPE, NO_ATTR)){
 		subprgmdecs();
 		cmpdstmt();
+		popGreenStack();
 	} else if(tokenEquals(tok, BEGIN_TYPE, NO_ATTR)){
 		cmpdstmt();
+		popGreenStack();
 	} else{
 		printf("subprgmdec error\n");
 		char tokText[12];
@@ -365,6 +395,8 @@ void subprgmhead(){
 void subprgmheadtail(char *lexeme){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR)){
 		checkAddGreenNode(lexeme, FNAME_TYPE);
+		memoryUsed = 0;
+		fprintf(addressesFile, "\n");
 		int numArgs = args();
 		match(CATCHALL_TYPE, COLON_ATTR);
 		int returnType = stndtype();
@@ -372,8 +404,12 @@ void subprgmheadtail(char *lexeme){
 		//checkAddGreenNode(lexeme, FNAME_TYPE, returnType, numArgs);
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 	} else if(tokenEquals(tok, CATCHALL_TYPE, COLON_ATTR)){
+		checkAddGreenNode(lexeme, FNAME_TYPE);
+		memoryUsed = 0;
+		fprintf(addressesFile, "\n");
 		match(CATCHALL_TYPE, COLON_ATTR);
-		stndtype();
+		int returnType = stndtype();
+		addToGreenNode(lexeme, returnType, 0);
 		match(CATCHALL_TYPE, SEMICOLON_ATTR);
 	} else {
 		printf("subprgmheadtail error\n");
@@ -413,7 +449,7 @@ int paramlist(){
 		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
-		int varType = type();
+		int varType = type("");
 		if(varType == INT_TYPE)
 			varType = FPINT_TYPE;
 		else if(varType == REAL_TYPE)
@@ -448,7 +484,7 @@ int paramlisttail(){
 		struct linkedNode *idNode = (struct linkedNode*)tok.attr;
 		match(ID_TYPE, -1);
 		match(CATCHALL_TYPE, COLON_ATTR);
-		int varType = type();
+		int varType = type("");
 		if(varType == INT_TYPE)
 			varType = FPINT_TYPE;
 		else if(varType == REAL_TYPE)
@@ -501,10 +537,8 @@ void cmpdstmttail(){
 		tokenEquals(tok, WHILE_TYPE, NO_ATTR)){
 		optnlstmts();
 		match(END_TYPE, NO_ATTR);
-		popGreenStack();
 	} else if (tokenEquals(tok, END_TYPE, NO_ATTR)){
 		match(END_TYPE, NO_ATTR);
-		popGreenStack();
 	} else{
 		printf("cmpdstmttail error\n");
 		char tokText[12];
@@ -684,10 +718,11 @@ int variabletail(int inheritedType){
 		match(CATCHALL_TYPE, OPENBRACKET_ATTR);
 		int exprType = expr();
 		match(CATCHALL_TYPE, CLOSEBRACKET_ATTR);
-		if(exprType == INT_TYPE){
-			if(inheritedType == AINT_TYPE){
+		printf("looking at array with array type %d and inner type %d\n", inheritedType, exprType);
+		if(exprType == INT_TYPE || exprType == FPINT_TYPE){
+			if(inheritedType == AINT_TYPE || inheritedType == FPAINT_TYPE){
 				return INT_TYPE;
-			} else if (inheritedType == AREAL_TYPE){
+			} else if (inheritedType == AREAL_TYPE || inheritedType == FPAREAL_TYPE){
 				return REAL_TYPE;
 			} else{
 				return ERR_TYPE;
@@ -715,7 +750,7 @@ int exprlist(struct symbolNode *childNode){
 		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) ||
 		tokenEquals(tok, ID_TYPE, -1) ||
 		tokenEquals(tok, NOT_TYPE, NO_ATTR) ||
-		tokenEquals(tok, INT_TYPE, NO_ATTR) ||
+		tokenEquals(tok, INT_TYPE, -1) ||
 		tokenEquals(tok, REAL_TYPE, NO_ATTR) ||
 		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		int exprVarType = expr();
@@ -783,7 +818,7 @@ int expr(){
 		tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR) || 
 		tokenEquals(tok, ID_TYPE, -1) || 
 		tokenEquals(tok, NOT_TYPE, NO_ATTR) || 
-		tokenEquals(tok, INT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, INT_TYPE, -1) || 
 		tokenEquals(tok, REAL_TYPE, NO_ATTR)|| 
 		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		int smplexprType = smplexpr();
@@ -852,7 +887,7 @@ int smplexpr(){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || 
 		tokenEquals(tok, ID_TYPE, -1) || 
 		tokenEquals(tok, NOT_TYPE, NO_ATTR) || 
-		tokenEquals(tok, INT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, INT_TYPE, -1) || 
 		tokenEquals(tok, REAL_TYPE, NO_ATTR) || 
 		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		int termType = term();
@@ -937,7 +972,7 @@ int term(){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) || 
 		tokenEquals(tok, ID_TYPE, -1) || 
 		tokenEquals(tok, NOT_TYPE, NO_ATTR) || 
-		tokenEquals(tok, INT_TYPE, NO_ATTR) || 
+		tokenEquals(tok, INT_TYPE, -1) || 
 		tokenEquals(tok, REAL_TYPE, NO_ATTR) || 
 		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		int termInh = factor();
@@ -1046,8 +1081,8 @@ int factor(){
 			return BOOL_TYPE;
 		else
 			return ERR_TYPE;
-	} else if(tokenEquals(tok, INT_TYPE, NO_ATTR)){
-		match(INT_TYPE, NO_ATTR);
+	} else if(tokenEquals(tok, INT_TYPE, -1)){
+		match(INT_TYPE, -1);
 		return INT_TYPE;
 	} else if(tokenEquals(tok, REAL_TYPE, NO_ATTR) || tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		match(REAL_TYPE, NO_ATTR);
@@ -1103,12 +1138,10 @@ int factortail(int inheritedType, long attr){
 		match(CATCHALL_TYPE, CLOSEBRACKET_ATTR);
 		// is this right? it has aint but no areal
 		//TODO
-		if(exprType == INT_TYPE)
-			return AINT_TYPE;
-		else if(exprType == INT_TYPE){
-			if(inheritedType == AINT_TYPE)
+		if(exprType == INT_TYPE || exprType == FPINT_TYPE){
+			if(inheritedType == AINT_TYPE || inheritedType == FPAINT_TYPE)
 				return INT_TYPE;
-			else if(inheritedType == REAL_TYPE)
+			else if(inheritedType == REAL_TYPE || inheritedType == FPAREAL_TYPE)
 				return REAL_TYPE;
 			else
 				return ERR_TYPE;
@@ -1127,6 +1160,10 @@ int factortail(int inheritedType, long attr){
 		tokenEquals(tok, ELSE_TYPE, NO_ATTR) || 
 		tokenEquals(tok, END_TYPE, NO_ATTR) || 
 		tokenEquals(tok, THEN_TYPE, NO_ATTR)){
+		if(inheritedType == FNAME_TYPE){
+			printf("function call with no params\n");
+			inheritedType = getReturnType(attr, 0);
+		}
 		return inheritedType;
 	} else{
 		printf("factortail error\n");
@@ -1164,7 +1201,7 @@ void sign(){
 		while(!tokenEquals(tok, ID_TYPE, -1) &&
 			!tokenEquals(tok, NOT_TYPE, NO_ATTR) &&
 			!tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR) &&
-			!tokenEquals(tok, INT_TYPE, NO_ATTR) &&
+			!tokenEquals(tok, INT_TYPE, -1) &&
 			!tokenEquals(tok, REAL_TYPE, NO_ATTR) &&
 			!tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 			tok = getToken();

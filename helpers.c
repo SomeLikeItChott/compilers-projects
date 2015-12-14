@@ -8,6 +8,7 @@ FILE *tokenFile;
 FILE *listingFile;
 FILE *srcFile;
 FILE *srcLineFile;
+FILE *addressesFile;
 
 /*
 void addToTable(char *lexeme, int type, int attr, struct linkedNode **table){
@@ -205,6 +206,7 @@ void popGreenStack(){
 	printf("popping green stack\n");
 	if(greenStack->next != NULL){
 		eye = greenStack->greenNode;
+		printf("green stack is now pointing to %s\n", (greenStack->greenNode)->lexeme);
 	} //else, the program has just ended, so we don't need to worry
 	//TODO unless there is an error? check this
 	greenStack = greenStack->next;

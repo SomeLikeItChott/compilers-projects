@@ -18,6 +18,8 @@ extern FILE *listingFile;
 extern FILE *srcFile;
 //source file, for printing to listing file
 extern FILE *srcLineFile;
+//file to print memory address info to
+extern FILE *addressesFile;
 
 
 

@@ -115,7 +115,7 @@ struct token checkintErrors(char *lexeme){
 		struct token a = {.type = LEXERR_TYPE, .attr = LEADING_ZEROES_ATTR};
 		return a;
 	} else {
-		struct token a = {.type = INT_TYPE, .attr = NO_ATTR};
+		struct token a = {.type = INT_TYPE, .attr = atoi(lexeme)};
 		return a;
 	}
 }

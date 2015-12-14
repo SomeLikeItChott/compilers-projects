@@ -43,7 +43,7 @@ void initLex(){
 	back = &buffer[0] - sizeof(char);
 }
 
-void openFiles(char *tokenName, char *listingName, char *fileName){
+void openFiles(char *tokenName, char *listingName, char *fileName, char *addressesName){
 	tokenFile = fopen(tokenName, "w");
 	if(tokenFile == NULL){
 		printf("Cannot open token file, exiting\n");
@@ -65,6 +65,11 @@ void openFiles(char *tokenName, char *listingName, char *fileName){
 		printf("Cannot open source file, exiting\n");
 		exit(1);
 	}
+	addressesFile = fopen(addressesName, "w");
+	if(addressesFile == NULL){
+		printf("Cannot open addresses file, exiting\n");
+		exit(1);
+	}
 	char buffer[74];
 	fgets(buffer, 73, srcLineFile);
 	fprintf(listingFile, "%-8d%s", 1, buffer);
@@ -73,6 +78,7 @@ void openFiles(char *tokenName, char *listingName, char *fileName){
 void closeFiles(){
 	fclose(tokenFile);
 	fclose(listingFile);
+	fclose(addressesFile);
 }
 
 char nextChar(){
@@ -91,6 +97,7 @@ struct token generateToken(int tokenType, int tokenAttr, char *attrName){
 	strncpy(lexeme, back + sizeof(char), lexemeLength * sizeof(char));
 	//strncpy doesn't want to add null terminal, do it manually
 	lexeme[lexemeLength] = '\0';
+	//printf("lexeme is %s\n", lexeme);
 	back = forw;
 	struct token a = {.type = tokenType, .attr = tokenAttr};
 	switch (tokenType){
