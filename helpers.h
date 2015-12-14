@@ -3,6 +3,17 @@
 
 #include "string.h"
 
+//pointer to symbol table
+extern struct linkedNode *symbolTable;
+
+struct linkedNode {
+	char* lexeme;
+	int type;
+	long attr;
+	struct linkedNode *next;
+	int varType;
+};
+
 //attr has to be long to be able to hold pointers
 //machine (or compiler?) is 64-bit
 struct token {
@@ -93,6 +104,21 @@ struct token {
 //misc attr
 #define NO_ATTR		0
 
+//defining types for type-checking
+#define ERR_TYPE	0
+#define ERR_STAR_TYPE	1
+//these types are literal types, and luckily their numbering works out!
+//INT_TYPE 			2
+//REAL_TYPE 		3
+#define BOOL_TYPE	4
+#define FNAME_TYPE	5
+#define AINT_TYPE	6
+#define AREAL_TYPE	7
+//I may need to also define types for function parameters?
+//TODO
+
+void setVarType(int varType, long attr, struct linkedNode *table);
+int getVarType(long attr, struct linkedNode *table);
 void getTextFromType(char *text, int type);
 void getPlaintext(char *text, int type, long attr);
 void getCatchallPlaintext(char *text, long attr);

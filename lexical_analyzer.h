@@ -14,8 +14,6 @@
 
 //pointer to reserved word table
 extern struct linkedNode *reservedTable;
-//pointer to symbol table
-extern struct linkedNode *symbolTable;
 
 //token file
 extern FILE *tokenFile;
@@ -37,12 +35,6 @@ extern char *back;
 //line num, for printing listing file
 extern int lineNum;
 
-struct linkedNode {
-	char* lexeme;
-	int type;
-	long attr;
-	struct linkedNode *next;
-};
 struct token getToken();
 char nextChar();
 struct token generateToken(int tokenType, int tokenAttr, char *attrName);

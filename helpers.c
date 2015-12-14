@@ -1,5 +1,46 @@
 #include "helpers.h"
 
+struct linkedNode *symbolTable;
+
+void setVarType(int varType, long attr, struct linkedNode *table){
+	struct linkedNode *temp = table;
+	while(temp != NULL){
+		if(attr == temp->attr){
+			temp->varType = varType;
+			return;
+		}
+		temp = temp->next;
+	}
+}
+
+int getVarType(long attr, struct linkedNode *table){
+	struct linkedNode *temp = table;
+	while(temp != NULL){
+		if(attr == temp->attr){
+			return temp->varType;
+		}
+		temp = temp->next;
+	}
+	return -1;
+}
+
+/*
+struct token isInTable(char *string, struct linkedNode *table){
+	struct linkedNode *temp = table;
+	while(temp != NULL){
+		if(strcmp(string, temp->lexeme) == 0){
+			struct token tableItem;
+			tableItem.type = temp->type;
+			tableItem.attr = temp->attr;
+			return tableItem;
+		}
+		temp = temp->next;
+	}
+	struct token a = {.type = -1, .attr = -1};
+	return a;
+}
+*/
+
 void getTextFromType(char *text, int type){
 	switch (type){
 		case WS_TYPE: strcpy(text, "(WS)"); break;

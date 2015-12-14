@@ -1,7 +1,6 @@
 #include "lexical_analyzer.h"
 
 struct linkedNode *reservedTable;
-struct linkedNode *symbolTable;
 FILE *tokenFile;
 FILE *listingFile;
 FILE *srcFile;
