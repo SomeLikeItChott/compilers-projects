@@ -55,6 +55,8 @@ int checkAddGreenNode(char *lexeme, int varType){
 	newNode->parentOrPrevSibling = eye;
 	newNode->color = GREEN_COLOR;
 
+	fprintf(addressesFile, "\n%s:\n", lexeme);
+
 	printf("now adding node with lexeme %s\n", newNode->lexeme);
 	printf("address of new node is %p\n", newNode);
 
@@ -207,36 +209,12 @@ void popGreenStack(){
 	if(greenStack->next != NULL){
 		eye = greenStack->greenNode;
 		printf("green stack is now pointing to %s\n", (greenStack->greenNode)->lexeme);
-	} //else, the program has just ended, so we don't need to worry
-	//TODO unless there is an error? check this
-	greenStack = greenStack->next;
+		greenStack = greenStack->next;
+	} else{
+		printf("just made no changes to green stack\n");
+	} 
 	printf("eye is now %s\n", eye->lexeme);
 }
-
-/*
-//is actually unnecessary i think?
-void setVarType(int varType, long attr, struct linkedNode *table){
-	struct linkedNode *temp = table;
-	while(temp != NULL){
-		if(attr == temp->attr){
-			temp->varType = varType;
-			return;
-		}
-		temp = temp->next;
-	}
-}
-
-int getVarType(long attr, struct linkedNode *table){
-	struct linkedNode *temp = table;
-	while(temp != NULL){
-		if(attr == temp->attr){
-			return temp->varType;
-		}
-		temp = temp->next;
-	}
-	return -1;
-}
-*/
 
 int isNumVarType(int varType){
 	if(varType == INT_TYPE || varType == REAL_TYPE || varType == FPINT_TYPE || varType == FPREAL_TYPE)

@@ -396,7 +396,6 @@ void subprgmheadtail(char *lexeme){
 	if(tokenEquals(tok, CATCHALL_TYPE, OPENPAREN_ATTR)){
 		checkAddGreenNode(lexeme, FNAME_TYPE);
 		memoryUsed = 0;
-		fprintf(addressesFile, "\n");
 		int numArgs = args();
 		match(CATCHALL_TYPE, COLON_ATTR);
 		int returnType = stndtype();
@@ -649,16 +648,18 @@ void stmt(){
 	} else if(tokenEquals(tok, WHILE_TYPE, NO_ATTR)){
 		match(WHILE_TYPE, NO_ATTR);
 		int exprType = expr();
-		match(DO_TYPE, NO_ATTR);
-		stmt();
-		if(exprType == BOOL_TYPE){
-			printf("while statement has bool\n");
-		} else{
-			printf("BAD IF STATEMENT");
+		printf("hey sam %d\n", exprType);
+		if(exprType != BOOL_TYPE){
+			printf("BAD WHILE STATEMENT");
 			char exprText[15];
 			getVarTypePlaintext(exprText, exprType);
 			fprintf(listingFile, "SEMERR: Nonboolean on while statement, it is %s\n", exprText);
 		}
+		match(DO_TYPE, NO_ATTR);
+		stmt();
+		if(exprType == BOOL_TYPE){
+			printf("while statement has bool\n");
+		} 
 	} else{
 		printf("stmt error\n");
 		char tokText[12];
@@ -754,14 +755,22 @@ int exprlist(struct symbolNode *childNode){
 		tokenEquals(tok, REAL_TYPE, NO_ATTR) ||
 		tokenEquals(tok, LONGREAL_TYPE, NO_ATTR)){
 		int exprVarType = expr();
+		//printf("here i am\n");
+		//printf("the var type is %d\n", childNode->varType);
+		if(childNode->varType == UNDECL_TYPE){
+			printf("continuing down exprlist with undeclared function\n");
+			int numExprs = exprlisttail(childNode);
+			return numExprs + 1;
+		}
+
 		//TODO give more specific error message?
-		if(!(childNode->varType == FPINT_TYPE || 
+		/*if(!(childNode->varType == FPINT_TYPE || 
 			childNode->varType == FPREAL_TYPE || 
 			childNode->varType == FPAINT_TYPE || 
 			childNode->varType == FPAREAL_TYPE)){
 			fprintf(listingFile, "SEMERR: Too many parameters in function call\n" );
-		}
-		else if(!varTypesAreFPEquivalent(childNode->varType, exprVarType)){
+		}*/
+		if(!varTypesAreFPEquivalent(childNode->varType, exprVarType)){
 			fprintf(listingFile, "SEMERR: Actual parameter type doesn't match formal parameter type\n" );
 		}
 		int numExprs = exprlisttail(childNode->nextSibling);
@@ -785,13 +794,18 @@ int exprlisttail(struct symbolNode *childNode){
 	} else if (tokenEquals(tok, CATCHALL_TYPE, COMMA_ATTR)) {
 		match(CATCHALL_TYPE, COMMA_ATTR);
 		int exprVarType = expr();
+		if(childNode->varType == UNDECL_TYPE){
+			printf("continuing down exprlist with undeclared function\n");
+			int numExprs = exprlisttail(childNode);
+			return numExprs + 1;
+		}
 		//TODO give more specific error message?
-		if(!(childNode->varType == FPINT_TYPE || 
+		/*if(!(childNode->varType == FPINT_TYPE || 
 			childNode->varType == FPREAL_TYPE || 
 			childNode->varType == FPAINT_TYPE || 
 			childNode->varType == FPAREAL_TYPE)){
 			fprintf(listingFile, "SEMERR: Too many parameters in function call\n" );
-		}
+		}*/
 		else if(!varTypesAreFPEquivalent(childNode->varType, exprVarType)){
 			fprintf(listingFile, "SEMERR: Actual parameter type doesn't match formal parameter type\n" );
 		}
@@ -856,9 +870,12 @@ int exprtail(int inheritedType){
 	} else if (tokenEquals(tok, RELOP_TYPE, -1)){
 		match(RELOP_TYPE, -1);
 		int smplexprType = smplexpr(inheritedType);
-		if(isNumVarType(smplexprType) && isNumVarType(inheritedType)){
-			return BOOL_TYPE;
-		} else if(smplexprType == inheritedType){
+		//if(isNumVarType(smplexprType) && isNumVarType(inheritedType)){
+		//	return BOOL_TYPE;
+		printf("comparing %d and %d\n", inheritedType, smplexprType);
+		if(varTypesAreFPEquivalent(smplexprType,inheritedType) == INT_TYPE ||
+			varTypesAreFPEquivalent(smplexprType,inheritedType) == REAL_TYPE){
+			printf("they are equivalent\n");
 			return BOOL_TYPE;
 		} else {
 			return ERR_TYPE;
@@ -1115,6 +1132,7 @@ int factortail(int inheritedType, long attr){
 		match(CATCHALL_TYPE, OPENPAREN_ATTR);
 		struct symbolNode *funcNode = getFunctionNode(attr);
 		struct symbolNode *childNode;
+		printf("jfdakldfsajlk\n");
 		if(funcNode->varType != UNDECL_TYPE) {
 			if(funcNode->firstChild != NULL){
 				childNode = funcNode->firstChild;
@@ -1127,6 +1145,9 @@ int factortail(int inheritedType, long attr){
 			struct linkedNode *prgmNode = (struct linkedNode*)attr;
 			char *lexeme = prgmNode->lexeme;
 			//fprintf(listingFile, "SEMERR: Function %s is not declared in this scope\n", lexeme);
+			printf("function is undeclared, continuing to exprlist\n");
+			int numParams = exprlist(funcNode);
+			match(CATCHALL_TYPE, CLOSEPAREN_ATTR);
 			return ERR_TYPE;
 		}
 		int numParams = exprlist(childNode);
